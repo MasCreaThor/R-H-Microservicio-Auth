@@ -1,3 +1,5 @@
+// src/main/java/com/hotel/auth_service/repositories/UserRepository.java
+
 package com.hotel.auth_service.repositories;
 
 import com.hotel.auth_service.models.entity.User;

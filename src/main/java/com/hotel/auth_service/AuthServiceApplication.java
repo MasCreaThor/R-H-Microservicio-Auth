@@ -1,3 +1,5 @@
+// src/main/java/com/hotel/auth_service/AuthServiceApplication.java
+
 package com.hotel.auth_service;
 
 import org.springframework.boot.SpringApplication;

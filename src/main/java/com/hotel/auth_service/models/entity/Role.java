@@ -1,3 +1,5 @@
+// src/main/java/com/hotel/auth_service/models/entity/Role.java
+
 package com.hotel.auth_service.models.entity;
 
 import lombok.AllArgsConstructor;
