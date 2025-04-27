@@ -64,8 +64,17 @@ public class WebSecurityConfig {
             .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> 
-                auth.requestMatchers("/api/auth/**").permitAll()
+                auth
+                    // Permitir todas las rutas de autenticación públicas explícitamente
+                    .requestMatchers("/api/auth/register", "/api/auth/login", 
+                                    "/api/auth/validate-token", "/api/auth/refresh-token").permitAll()
+                    // Mantener otras rutas públicas
                     .requestMatchers("/api/test/**").permitAll()
+                    // Para verificación de email
+                    .requestMatchers("/api/users/check-email/**").permitAll()
+                    // Actuator endpoints para health checks
+                    .requestMatchers("/actuator/health").permitAll()
+                    // El resto requiere autenticación
                     .anyRequest().authenticated()
             );
         

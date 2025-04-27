@@ -4,12 +4,15 @@ package com.hotel.auth_service.security.jwt;
 
 import com.hotel.auth_service.models.entity.User;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +26,9 @@ public class JwtUtils {
 
     @Value("${app.jwtExpirationMs}")
     private int jwtExpirationMs;
+    
+    // Usamos HS256 en lugar de HS512 para ser más compatible con claves más cortas
+    private static final SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
 
     /**
      * Genera un token JWT para un usuario autenticado
@@ -34,13 +40,16 @@ public class JwtUtils {
         claims.put("id", userPrincipal.getId());
         claims.put("email", userPrincipal.getEmail());
         claims.put("role", userPrincipal.getRole().getName());
+        
+        // Generar una clave segura basada en la semilla jwtSecret
+        SecretKey key = getSigningKey();
 
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userPrincipal.getUsername())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .signWith(key, SIGNATURE_ALGORITHM)
                 .compact();
     }
 
@@ -52,13 +61,16 @@ public class JwtUtils {
         claims.put("id", user.getId());
         claims.put("email", user.getEmail());
         claims.put("role", user.getRole().getName());
+        
+        // Generar una clave segura basada en la semilla jwtSecret
+        SecretKey key = getSigningKey();
 
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(user.getEmail())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .signWith(key, SIGNATURE_ALGORITHM)
                 .compact();
     }
 
@@ -66,7 +78,12 @@ public class JwtUtils {
      * Obtiene el nombre de usuario del token JWT
      */
     public String getUserNameFromJwtToken(String token) {
-        return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody().getSubject();
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .getSubject();
     }
 
     /**
@@ -74,7 +91,10 @@ public class JwtUtils {
      */
     public boolean validateJwtToken(String authToken) {
         try {
-            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
+            Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(authToken);
             return true;
         } catch (SignatureException e) {
             logger.error("Invalid JWT signature: {}", e.getMessage());
@@ -89,5 +109,13 @@ public class JwtUtils {
         }
 
         return false;
+    }
+    
+    /**
+     * Genera una clave segura para firmar JWT basada en la semilla jwtSecret
+     */
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }
