@@ -4,6 +4,8 @@ package com.hotel.auth_service.controllers;
 
 import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 // Cambiar de javax.validation a jakarta.validation
 import jakarta.validation.Valid;
 
@@ -197,13 +199,23 @@ public class AuthController {
     
     /**
      * Endpoint para validar token
-     * @param token Token a validar
+     * @param request Token a validar
      * @return ResponseEntity con resultado de validación
      */
     @PostMapping("/validate-token")
-    public ResponseEntity<?> validateToken(@RequestBody TokenRequest request) {
-        boolean isValid = jwtUtils.validateJwtToken(request.getToken());
-        return ResponseEntity.ok(isValid);
+    public ResponseEntity<?> validateToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header == null || !header.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+        }
+        String token = header.substring(7);
+        try {
+            // Usa tu clase JwtUtils o similar para validar el token
+            boolean valid = jwtUtils.validateJwtToken(token);
+            return ResponseEntity.ok(valid);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(false);
+        }
     }
     
     /**
