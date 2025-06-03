@@ -37,6 +37,7 @@ import com.hotel.auth_service.repositories.UserRepository;
 import com.hotel.auth_service.security.jwt.JwtUtils;
 import com.hotel.auth_service.security.jwt.UserDetailsImpl;
 import com.hotel.auth_service.service.RefreshTokenService;
+import com.hotel.auth_service.models.dto.TokenRequest;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -200,8 +201,8 @@ public class AuthController {
      * @return ResponseEntity con resultado de validación
      */
     @PostMapping("/validate-token")
-    public ResponseEntity<?> validateToken(@RequestBody String token) {
-        boolean isValid = jwtUtils.validateJwtToken(token);
+    public ResponseEntity<?> validateToken(@RequestBody TokenRequest request) {
+        boolean isValid = jwtUtils.validateJwtToken(request.getToken());
         return ResponseEntity.ok(isValid);
     }
     
